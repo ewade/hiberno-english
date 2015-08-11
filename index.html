@@ -1,179 +1,157 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>Hiberno-English</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style type="text/css">
-
 @import url(http://fonts.googleapis.com/css?family=Playfair+Display);
-
 a:link { text-decoration:none; }
-
 html, body, #wrapper {
   background: black;
 }
-
 body {
   font-family: Arial, Helvetica, sans-serif;
   color:white;
   padding:30px;
 }
-
-header {
-  text-align:right;
-  font-size:24px;
-  padding: 0px 10px 0px 0px;
-  background:white;
-  color:black;
-  display: none;
-}
-
-header span {
-  font-size:15px;
-  font-weight: bold;
-  margin-left:50px;
-  margin-top: 40px;
-}
-
 #wrapper {
   width:960px;
   font-size:60px;
-  /*margin-top: 70px;*/
   margin-left:auto;
   margin-right:auto;
 }
-
-article {
+.pair {
   margin-bottom: 45px;
   overflow: auto;
 }
-
 .saying {
   text-align:left;
   width:100%;
-  /*   background:green; */
   color:#white;
   float:left;
   text-transform: lowercase;
   padding-bottom: 10px;
   font-family: 'Playfair Display', serif;
 }
-
 .translation {
   text-align:left;
   width:100%;
-  /*   background:yellow; */
   color:white;
   float:left;
   text-transform: lowercase;
   font-weight: bold;
   font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
 }
-
 </style>
 </head>
 <body>
 
-<header>
-  <span>Hiberno-English translator</span><a href="http://emmawade.com"> </a>
-</header>
-
-<div id="wrapper">
-</div>
+<div id="wrapper"></div>
 
 <script type="text/javascript">
+"use strict";
 
+var dictionary = {
+  "sure you're only marvellous": "you are great or you think you are great",
+  "mad as a box of frogs": "totally crazy",
+  "didn't lick it off the stones": "inherited or learned behavior",
+  "I did in me eye": "I didn't do it",
+  "eejit": "fool",
+  "go away outta that": "you are kidding?",
+  "yer wan and yer man": "female or male who's name I don't recall or care to use",
+  "I'm only after'n seeing yer wan amn't I": "I just saw that lady",
+  "she's giving out to me": "she's berating me",
+  "daft as a brush": "crazy",
+  "was it all of ye or just yourself?": "were you alone?",
+  "don't get thick with me": "don't",
+  "yer ma's yer da": "your mother is so ugly she looks like your father",
+  "that's quarn bad": "that is awful",
+  "scarlet for ye": "embarrassed for you",
+  "gaff": "house",
+  "yoke": "thing",
+  "thingamajig": "undefined object",
+  "watchamacallit": "name of an object or person user can not recall",
+  "doddler" : "remote control",
+  "fair play": "well done",
+  "gas": "funny",
+  "story": "news",
+  "craic": "fun",
+  "deadly": "awesome",
+  "gobshite": "fool",
+  "brutal": "awful",
+  "how're ya": "what's up"
+};
+
+var numPairsToDisplay = 3;
 var delay = 3000;
 
-var number_of_pairs_to_show = 3;
+// setting this to false won't check to see if the
+// randomly chosen translation matches the saying.
+// setting this to true will ensure that the real translation
+// will never be shown beside the saying.
+var onlyWrongTranslations = true;
 
-var pairs = [
-    ["sure you're only marvelous",              "you are great or you think you are great"],
-    ["mad as a box of frogs",                   "totally crazy"],
-    ["didn’t lick it off the stones",           "inherited or learned behavior"],
-    ["I did in me eye",                         "I didn't do it"],
-    ["eejit",                                   "fool"],
-    ["go away outta that",                      "you are kidding?"],
-    ["yer wan and yer man",                     "female or male who’s name I don’t recall or care to use"],
-    ["I’m only after’n seeing yer wan amn’t I", "I just saw that lady"],
-    ["she’s giving out to me",                  "she's berating me"],
-    ["daft as a brush",                         "crazy"],
-    ["was it all of ye or just yourself?",      "were you alone?"],
-    ["don’t get thick with me",                 "don't"],
-    ["yer ma’s yer da",                         "your mother is so ugly she looks like your father"],
-    ["That’s quarn bad",                        "that is awful" ],
-    ["Scarlet for ye",                          "embarrassed for you"],
-    ["gaff",                                    "house"],
-    ["yoke",                                    "thing"],
-    ["thingamajig",                             "undefined object"],
-    ["watchamacallit",                          "name of an object or person user can not recall"],
-    ["doddler" ,                                "remote control"],
-    ["fair play",                               "well done"],
-    ["gas",                                     "funny"],
-    ["story",                                   "news"],
-    ["craic",                                   "fun"],
-    ["deadly",                                  "awesome"],
-    ["gobshite",                                "fool"],
-    ["brutal",                                  "awful"],
-    ["how're ya",                               "what's up"]
-];
+var unusedPairs = [];
+var usedPairs = [];
 
-function rand_index(len) {
-  return Math.floor(Math.random() * len);
+function generateRandomPairs(input, onlyWrongTranslations) {
+  var output = {};
+  var sayings = _.keys(input);
+  var translations = _.values(input);
+
+  while (sayings.length > 1) {
+    // pick a random saying
+    var saying_index = _.random(0, sayings.length-1);
+    // pick a random translation
+    var translation_index = _.random(0, translations.length-1);
+    // if we don't want the saying to match the translation
+    if (onlyWrongTranslations) {
+      // while the saying matches the translation
+      while (saying_index === translation_index) {
+        // randomly pick a new translation
+        translation_index = _.random(0, translations.length-1);
+      }
+    }
+    // add the new pair to the output object, and
+    // simultaneously remove the saying and translation from
+    // the lists of sayings and translations so they don't get
+    // chosen again
+    _.extend(output, _.object(
+      [sayings.splice(saying_index, 1)],
+      translations.splice(translation_index, 1)
+     ));
+  }
+  return _.pairs(output);
 }
 
 function update() {
 
-  var rand1 = rand_index(pairs.length);
-  var rand2 = rand_index(pairs.length);
-
-
-  while (rand1 === rand2) {
-    rand2 = rand_index(pairs.length);
+  if (unusedPairs.length == 0) {
+    unusedPairs = generateRandomPairs(dictionary, true);
+    usedPairs = [];
   }
 
-//     console.log("rand1 = " + rand1 + ", rand2 = " + rand2);
+  // remove the first pair from unusedPairs and add it to the start of usedPairs
+  usedPairs.unshift(unusedPairs.shift());
 
-  var saying = pairs[rand1][0];
-  var translation = pairs[rand2][1];
+  $("#wrapper").append('<div class="pair"></div>');
+  $(".pair").last().append('<div class="saying">' + usedPairs[0][0] + '</div>');
+  $(".pair").last().append('<div class="translation">' + usedPairs[0][1] + '</div>');
 
-
-//     console.log("saying = " + saying + ", translation = " + translation);
-
-  var wrapperDiv = document.getElementById("wrapper");
-
-  var sayingDiv = document.createElement("div");
-  sayingDiv.className = "saying";
-
-  var translationDiv = document.createElement("div");
-  translationDiv.className = "translation";
-
-  var pair = document.createElement("article");
-
-
-  wrapperDiv.appendChild(pair);
-  pair.appendChild(sayingDiv);
-  pair.appendChild(translationDiv);
-
-  sayingDiv.innerHTML = saying;
-  translationDiv.innerHTML = translation;
-
-  if ($("article").length > number_of_pairs_to_show) {
-    $("article").first().remove();
+  if ($(".pair").length > numPairsToDisplay) {
+    $(".pair").first().remove();
   }
 
 }
 
 update();
-
 setInterval(update, delay);
-
 </script>
 
 </body>
