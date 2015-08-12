@@ -107,15 +107,15 @@ function generateRandomPairs(input, onlyWrongTranslations) {
 
   while (sayings.length > 1) {
     // pick a random saying
-    var saying_index = _.random(0, sayings.length-1);
+    var saying_index = _.random(sayings.length-1);
     // pick a random translation
-    var translation_index = _.random(0, translations.length-1);
+    var translation_index = _.random(translations.length-1);
     // if we don't want the saying to match the translation
     if (onlyWrongTranslations) {
       // while the saying matches the translation
       while (saying_index === translation_index) {
         // randomly pick a new translation
-        translation_index = _.random(0, translations.length-1);
+        translation_index = _.random(translations.length-1);
       }
     }
     // add the new pair to the output object, and
@@ -153,6 +153,5 @@ function update() {
 update();
 setInterval(update, delay);
 </script>
-
 </body>
 </html>
